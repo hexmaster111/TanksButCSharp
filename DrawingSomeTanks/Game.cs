@@ -1,10 +1,14 @@
 ﻿using System.Drawing;
+using DrawingSomeTanks.TankAis;
 using SDL2;
 
 namespace DrawingSomeTanks;
 
 public class GameField
 {
+    public int Width => Program.ScreenWidth;
+    public int Height => Program.ScreenHeight;
+
     public List<Tank> Tanks = new();
     public List<AmmoPickup> AmmoPickups = new();
     public List<Projectile> Projectiles = new();
@@ -23,19 +27,23 @@ public class Game
 
     public void Update(long currentTime)
     {
-        GameField.Projectiles.ForEach(p => p.Update());
-        GameField.Projectiles.RemoveAll(p => p.IsOutOfBounds(Program.ScreenWidth, Program.ScreenHeight));
-        
-        GameField.Tanks.ForEach(t => t.Update(GameField, currentTime));
-        
+        GameField.Tanks.ForEach(t =>
+        {
+            t.Update(GameField, currentTime);
+        });
+
         GameField.Projectiles.ForEach(p =>
         {
+            p.Update();
             var tank = GameField.Tanks.FirstOrDefault(p.IsCollidingWithTank);
             if (tank == null) return;
             tank.Health -= 1;
             if (tank.Health > 0) return;
             GameField.Tanks.Remove(tank);
         });
+
+        GameField.Projectiles.RemoveAll(p => p.IsOutOfBounds(GameField.Width, GameField.Height) ||
+                                             GameField.Tanks.Any(p.IsCollidingWithTank));
     }
 
 
@@ -46,8 +54,8 @@ public class Game
         GameField.AmmoPickups = Enumerable.Range(0, 10)
             .Select(_ => new AmmoPickup(
                 new Point(
-                    Random.Shared.Next(0, Program.ScreenWidth),
-                    Random.Shared.Next(0, Program.ScreenHeight)))
+                    Random.Shared.Next(0, GameField.Width),
+                    Random.Shared.Next(0, GameField.Height)))
             ).ToList();
 
         GameField.Tanks = tankAis.Select(tankAi =>
@@ -61,8 +69,8 @@ public class Game
                     Random.Shared.Next(0, 255)
                 ),
                 new Point(
-                    Random.Shared.Next(0, Program.ScreenWidth),
-                    Random.Shared.Next(0, Program.ScreenHeight))
+                    GameField.Width / 2,
+                    GameField.Height / 2)
             );
             return tank;
         }).ToList();
@@ -72,8 +80,8 @@ public class Game
             .Select(_ =>
                 new Projectile(
                     new Point(
-                        Random.Shared.Next(0, Program.ScreenWidth),
-                        Random.Shared.Next(0, Program.ScreenHeight)),
+                        Random.Shared.Next(0, GameField.Width),
+                        Random.Shared.Next(0, GameField.Height)),
                     Random.Shared.NextDouble() * Math.PI * 2
                 )
             ).ToList();
@@ -104,6 +112,27 @@ public class Game
                             Random.Shared.NextDouble() * Math.PI * 2
                         )
                     )).ToList();
+                break;
+            
+            case SDL.SDL_Keycode.SDLK_t:
+                //Add some random tanks
+                GameField.Tanks = GameField.Tanks.Concat(Enumerable.Range(0, 10)
+                    .Select(_ =>
+                    {
+                        var tank = new Tank
+                        (
+                            new BasicTestAi(),
+                            Color.FromArgb(
+                                Random.Shared.Next(0, 255),
+                                Random.Shared.Next(0, 255),
+                                Random.Shared.Next(0, 255)
+                            ),
+                            new Point(
+                                Random.Shared.Next(0, Program.ScreenWidth),
+                                Random.Shared.Next(0, Program.ScreenHeight))
+                        );
+                        return tank;
+                    })).ToList();
                 break;
 
             default:
