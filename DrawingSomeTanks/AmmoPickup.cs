@@ -25,4 +25,11 @@ public class AmmoPickup
         SDL.SDL_SetRenderDrawColor(renderer, 0x66, 0xFF, 0x66, 0xFF);
         SDL.SDL_RenderFillRect(renderer, ref rect);
     }
+
+    internal bool IsCollidingWithTank(Tank arg)
+    {
+        var tankRect = new Rectangle(arg.Position.X - (Tank.TankSize / 2), arg.Position.Y - (Tank.TankSize / 2), Tank.TankSize, Tank.TankSize);
+        var ammoRect = new Rectangle(Position.X - (AmmoPickupSize / 2), Position.Y - (AmmoPickupSize / 2), AmmoPickupSize, AmmoPickupSize);
+        return tankRect.IntersectsWith(ammoRect);
+    }
 }

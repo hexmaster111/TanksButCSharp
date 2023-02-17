@@ -30,6 +30,9 @@ public class Game
         GameField.Tanks.ForEach(t =>
         {
             t.Update(GameField, currentTime);
+
+            if (t.Ammo < Tank.TankMaxAmmo && GameField.AmmoPickups.Any(t.IsCollidingWithAmmoPickup))
+                t.Ammo += 1;
         });
 
         GameField.Projectiles.ForEach(p =>
@@ -44,6 +47,8 @@ public class Game
 
         GameField.Projectiles.RemoveAll(p => p.IsOutOfBounds(GameField.Width, GameField.Height) ||
                                              GameField.Tanks.Any(p.IsCollidingWithTank));
+
+        GameField.AmmoPickups.RemoveAll(p => GameField.Tanks.Any(p.IsCollidingWithTank));
     }
 
 
@@ -58,33 +63,22 @@ public class Game
                     Random.Shared.Next(0, GameField.Height)))
             ).ToList();
 
-        GameField.Tanks = tankAis.Select(tankAi =>
+        foreach (var item in tankAis)
         {
             var tank = new Tank
             (
-                tankAi,
+                item,
                 Color.FromArgb(
                     Random.Shared.Next(0, 255),
                     Random.Shared.Next(0, 255),
                     Random.Shared.Next(0, 255)
                 ),
                 new Point(
-                    GameField.Width / 2,
-                    GameField.Height / 2)
+                    Random.Shared.Next(0, GameField.Width),
+                    Random.Shared.Next(0, GameField.Height))
             );
-            return tank;
-        }).ToList();
-
-        //Debug only
-        GameField.Projectiles = Enumerable.Range(0, 10)
-            .Select(_ =>
-                new Projectile(
-                    new Point(
-                        Random.Shared.Next(0, GameField.Width),
-                        Random.Shared.Next(0, GameField.Height)),
-                    Random.Shared.NextDouble() * Math.PI * 2
-                )
-            ).ToList();
+            GameField.Tanks.Add(tank);
+        }
     }
 
     public void DebugUpdate(SDL.SDL_Keycode key)
@@ -113,7 +107,7 @@ public class Game
                         )
                     )).ToList();
                 break;
-            
+
             case SDL.SDL_Keycode.SDLK_t:
                 //Add some random tanks
                 GameField.Tanks = GameField.Tanks.Concat(Enumerable.Range(0, 10)

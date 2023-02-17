@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using SDL2;
 using static SDL2.SDL;
 
 namespace DrawingSomeTanks;
@@ -17,9 +18,11 @@ public class Tank
     public double TankVelocity;
 
     public const int TankSize = 10;
-    public const int MaxSpeed = 2;
+    public const double MaxSpeed = .5;
     public const int TankPointerLineLength = 10;
     public const int TankShotCooldownMs = 500;
+    public const int TankMaxHealth = 5;
+    public const int TankMaxAmmo = 15;
 
 
     public Tank(ITankAi tankAi, Color color, Point startingPosition)
@@ -28,7 +31,7 @@ public class Tank
         Color = color;
         Position = startingPosition;
         Health = 5;
-        Ammo = 4;
+        Ammo = 15;
 
         _lastX = Position.X;
         _lastY = Position.Y;
@@ -72,11 +75,40 @@ public class Tank
 
         DrawPointer(TankRotation, TankPointerLineLength, renderer, Color.Red);
         DrawPointer(TurretRotation, TankPointerLineLength, renderer, Color.Blue);
+
+        var healthBarRect = new SDL_Rect
+        {
+            x = Position.X - (TankSize / 2) * 2,
+            y = Position.Y - TankSize - 3,
+            w = TankSize * 2,
+            h = 6
+        };
+        SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
+        SDL_RenderDrawRect(renderer, ref healthBarRect);
+
+        var healthBarFillRect = new SDL_Rect
+        {
+            x = Position.X - (TankSize / 2) * 2,
+            y = Position.Y - TankSize - 3,
+            w = (int)((TankSize * 2) * ((double)Health / TankMaxHealth)),
+            h = 3
+        };
+        SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+        SDL_RenderFillRect(renderer, ref healthBarFillRect);
+
+        var ammoBarRect = new SDL_Rect
+        {
+            x = Position.X - (TankSize / 2) * 2,
+            y = Position.Y - TankSize,
+            w = (int)((TankSize * 2) * ((double)Ammo / TankMaxAmmo)),
+            h = 3
+        };
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderDrawRect(renderer, ref ammoBarRect);
     }
 
     private double _lastX;
     private double _lastY;
-
     private double _lastFireTime;
 
 
@@ -113,5 +145,11 @@ public class Tank
             (int)newX,
             (int)newY
         );
+    }
+
+    internal bool IsCollidingWithAmmoPickup(AmmoPickup arg)
+    {
+        var distance = Math.Sqrt(Math.Pow(Position.X - arg.Position.X, 2) + Math.Pow(Position.Y - arg.Position.Y, 2));
+        return distance < TankSize;
     }
 }
