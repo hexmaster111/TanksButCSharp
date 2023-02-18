@@ -152,4 +152,6 @@ public class Tank
         var distance = Math.Sqrt(Math.Pow(Position.X - arg.Position.X, 2) + Math.Pow(Position.Y - arg.Position.Y, 2));
         return distance < TankSize;
     }
+
+
 }

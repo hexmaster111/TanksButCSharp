@@ -6,8 +6,8 @@ public class BasicTestAi : ITankAi
 {
     public string Name => "Basic Test AI";
 
-    private const int TankGetAmmoThreshold = 5;
-
+    private const int TankGetAmmoThreshold = 1;
+    private const int TankStopGettingAmmoThreshold = 5;
 
     public ITankAi.TankAction Update
     (
@@ -17,43 +17,69 @@ public class BasicTestAi : ITankAi
         Tank self
     )
     {
-
-        if (self.Ammo < TankGetAmmoThreshold)
+        var enemy = gameField.Tanks.MinBy(x =>
         {
-            var myPos = self.Position;
-            var ammoPickup = gameField.AmmoPickups.OrderBy(x
-                             => x.Position.DistanceTo(myPos)).FirstOrDefault();
-            if (ammoPickup == null) return new ITankAi.TankAction();
-            var ammoPos = ammoPickup.Position;
-            var angleToAmmo = Math.Atan2(ammoPos.Y - myPos.Y, ammoPos.X - myPos.X);
+            if (x == self) return double.MaxValue;
+            return x.Position.DistanceTo(self.Position);
+        });
 
+
+        if (enemy == null || enemy == self)
+            return new ITankAi.TankAction();
+
+        var enemyPos = enemy.Position;
+        var angleToEnemy = Math.Atan2(enemyPos.Y - self.Position.Y, enemyPos.X - self.Position.X);
+        var distanceToEnemy = self.Position.DistanceTo(enemyPos);
+
+        if (distanceToEnemy < Tank.TankSize * 3)
+        {
             return new ITankAi.TankAction
             {
-                TankRotation = angleToAmmo,
-                TankVelocity = 1,
-                Fire = false
+                TankVelocity = -1,
+                TurretRotation = angleToEnemy,
+                TankRotation = angleToEnemy,
+                Fire = true
             };
         }
 
-        var enemy = gameField.Tanks.FirstOrDefault(x => x != self);
-        if (enemy == null) return new ITankAi.TankAction();
-        var enemyPos = enemy.Position;
-        var angleToEnemy = Math.Atan2(enemyPos.Y - self.Position.Y, enemyPos.X - self.Position.X);
-        //if we are inside an enemy, move away
-        if (self.Position.DistanceTo(enemyPos) < Tank.TankSize * 2)
-        {
-            angleToEnemy += Math.PI;
-        }
         return new ITankAi.TankAction
         {
             TankRotation = angleToEnemy,
             TankVelocity = 1,
             TurretRotation = angleToEnemy,
-            Fire = true
+            Fire = distanceToEnemy < 150
         };
-
     }
+
+    public ITankAi.TankAction GetAmmoCollectionCommand(GameField gameField, Tank self)
+    {
+        var myPos = self.Position;
+
+
+        //Find an ammo pickup that is closest to us, and there is no other tank closer to it
+        var ammoPickup = gameField.AmmoPickups.MinBy(x =>
+        {
+            var distanceToAmmo = x.Position.DistanceTo(myPos);
+            var closestTank = gameField.Tanks.MinBy(y => y.Position.DistanceTo(x.Position));
+            var distanceToClosestTank = closestTank.Position.DistanceTo(x.Position);
+            if (distanceToClosestTank < distanceToAmmo) return double.MaxValue;
+            return distanceToAmmo;
+        });
+
+        if (ammoPickup == null) return new ITankAi.TankAction();
+        var ammoPos = ammoPickup.Position;
+        var angleToAmmo = Math.Atan2(ammoPos.Y - myPos.Y, ammoPos.X - myPos.X);
+
+        return new ITankAi.TankAction
+        {
+            TankRotation = angleToAmmo,
+            TankVelocity = 1,
+            Fire = false
+        };
+    }
+
 }
+
 
 public static class Ext
 {

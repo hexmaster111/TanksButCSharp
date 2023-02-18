@@ -9,8 +9,8 @@ internal class Program
     public static IntPtr Renderer = IntPtr.Zero;
     public static IntPtr Font = IntPtr.Zero;
 
-    public const int ScreenWidth = 640;
-    public const int ScreenHeight = 480;
+    public const int ScreenWidth = 320;
+    public const int ScreenHeight = 240;
 
     public static bool Running = true;
 
@@ -29,7 +29,7 @@ internal class Program
         Game.StartNewGame(new List<ITankAi>()
         {
             new BasicTestAi(),
-            new BasicTestAi(),
+            new DogingAi()
         });
 
 

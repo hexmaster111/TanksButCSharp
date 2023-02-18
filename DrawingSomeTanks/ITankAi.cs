@@ -7,15 +7,25 @@ public interface ITankAi
 
     public struct TankAction
     {
+
         /// <summary>
-        ///    New command for the tank after an AI Call
+        ///     Rotation of the turret in radians
         /// </summary>
-        /// <param name="turretRotation">rotation in rads</param>
-        /// <param name="tankRotation">rotation in rads</param>
-        /// <param name="tankVelocity">between -1 and 1</param>
         public double TurretRotation;
+
+        /// <summary>
+        ///     Rotation of the tank in radians
+        /// </summary>
         public double TankRotation;
+
+        /// <summary>
+        ///     Velocity of the tank, -1 is backwards, 0 is stopped, 1 is forwards
+        /// </summary>
         public double TankVelocity;
+
+        /// <summary>
+        ///     Whether or not to fire
+        /// </summary>
         public bool Fire;
     }
 }

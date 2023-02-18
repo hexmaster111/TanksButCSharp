@@ -31,9 +31,15 @@ public class Game
         {
             t.Update(GameField, currentTime);
 
-            if (t.Ammo < Tank.TankMaxAmmo && GameField.AmmoPickups.Any(t.IsCollidingWithAmmoPickup))
+            if (GameField.AmmoPickups.Any(t.IsCollidingWithAmmoPickup))
+            {
                 t.Ammo += 1;
+                t.Ammo = Math.Clamp(t.Ammo, 0, Tank.TankMaxAmmo);
+                GameField.AmmoPickups.RemoveAll(t.IsCollidingWithAmmoPickup);
+            }
         });
+
+
 
         GameField.Projectiles.ForEach(p =>
         {
@@ -48,7 +54,7 @@ public class Game
         GameField.Projectiles.RemoveAll(p => p.IsOutOfBounds(GameField.Width, GameField.Height) ||
                                              GameField.Tanks.Any(p.IsCollidingWithTank));
 
-        GameField.AmmoPickups.RemoveAll(p => GameField.Tanks.Any(p.IsCollidingWithTank));
+
     }
 
 
