@@ -58,6 +58,63 @@ public class DogingAi : ITankAi
             }
 
         }
-        return new ITankAi.TankAction();
+
+
+        //We arnt getting hit by anything
+        //We can just move away from any other tanks
+        var enemy = gameField.Tanks.MinBy(x =>
+        {
+            if (x == self) return double.MaxValue;
+            return x.Position.DistanceTo(self.Position);
+        });
+
+        if (enemy == null || enemy == self)
+            return new ITankAi.TankAction();
+
+        var enemyPos = enemy.Position;
+        var angleToEnemy = Math.Atan2(enemyPos.Y - self.Position.Y, enemyPos.X - self.Position.X);
+        var distanceToEnemy = self.Position.DistanceTo(enemyPos);
+
+        if (distanceToEnemy < Tank.TankSize * 3)
+        {
+            return new ITankAi.TankAction
+            {
+                TankVelocity = -1,
+                TurretRotation = angleToEnemy,
+                TankRotation = angleToEnemy,
+                Fire = true
+            };
+        }
+
+
+        //find the closest ammo pickup
+        var ammoPickup = gameField.AmmoPickups.MinBy(x => x.Position.DistanceTo(self.Position));
+
+        if (ammoPickup != null)
+        {
+            var distanceToAmmo = self.Position.DistanceTo(ammoPickup.Position);
+            var angleToAmmo = Math.Atan2(ammoPickup.Position.Y - self.Position.Y, ammoPickup.Position.X - self.Position.X);
+
+            if (distanceToAmmo < Tank.TankSize * 3)
+            {
+                return new ITankAi.TankAction
+                {
+                    TankVelocity = -1,
+                    TurretRotation = angleToAmmo,
+                    TankRotation = angleToAmmo,
+                    Fire = true
+                };
+            }
+
+            return new ITankAi.TankAction
+            {
+                TankVelocity = 1,
+                TurretRotation = angleToAmmo,
+                TankRotation = angleToAmmo,
+                Fire = distanceToAmmo < 150
+            };
+        }
+
+        return new ITankAi.TankAction { };
     }
 }

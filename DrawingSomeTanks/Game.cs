@@ -55,6 +55,8 @@ public class Game
                                              GameField.Tanks.Any(p.IsCollidingWithTank));
 
 
+        if (GameField.Tanks.Count == 1)
+            StartNewGame(new List<ITankAi> { new BasicTestAi(), new DogingAi() });
     }
 
 
