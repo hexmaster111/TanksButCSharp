@@ -16,6 +16,7 @@ internal class Program
 
     public static Game Game = new Game();
     public static int Fps = 0;
+    private static int targetFps = 60;
 
     public static void Main(string[] args)
     {
@@ -39,11 +40,24 @@ internal class Program
 
         while (Running)
         {
+
+
+
             currentTime = SDL_GetTicks();
             deltaTime = currentTime - lastTime;
-            if (deltaTime < 1000 / 60)
+            if (targetFps > 0)
             {
-                continue;
+
+                if (deltaTime < 1000 / targetFps)
+                {
+
+                    var timeToSleep = (1000 / targetFps) - deltaTime;
+                    Thread.Sleep((int)timeToSleep);
+                    continue;
+                }
+
+                lastTime = currentTime;
+                Fps = (int)(1000 / deltaTime);
             }
 
             lastTime = currentTime;
@@ -81,9 +95,20 @@ internal class Program
         SDL_RenderPresent(Renderer);
     }
 
+    private static int[] _fpsHistory = new int[60];
+    private static int _fpsHistoryIndex = 0;
     private static void RenderFps()
     {
-        var fpsText = $"FPS: {Fps:00}";
+        _fpsHistory[_fpsHistoryIndex] = Fps;
+        _fpsHistoryIndex++;
+        if (_fpsHistoryIndex >= _fpsHistory.Length)
+        {
+            _fpsHistoryIndex = 0;
+        }
+
+        var avgFps = _fpsHistory.Average();
+
+        var fpsText = $"FPS: {avgFps:00}";
         var FPSSurface = SDL2.SDL_ttf.TTF_RenderText_Solid(Font, fpsText,
         new SDL_Color() { r = 0xFF, g = 0xFF, b = 0xFF, a = 0xFF });
         var fpsTexture = SDL_CreateTextureFromSurface(Renderer, FPSSurface);
